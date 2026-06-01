@@ -1,0 +1,6 @@
+pytest>=8.0
+hypothesis>=6.100
+pytest-mock>=3.12
+httpx>=0.27
+pydantic>=2.0
+PyYAML>=6.0

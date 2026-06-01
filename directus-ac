@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Run directus-ac from the project directory without installation.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec python3 -m directus_ac "$@"
