@@ -323,7 +323,7 @@ def _make_client_with_policies(
 
 
 def _make_custom_perm(
-    name: str = "C_1",
+    name: str = "READ_C_1",
     policy: str = "editor",
     collection: str = "articles",
     action: str = "read",
@@ -347,7 +347,7 @@ class TestValidateCustomPermissions:
         validator = Validator(client)
         perms = [
             _make_custom_perm(policy="editor", collection="articles"),
-            _make_custom_perm(name="C_2", policy="viewer", collection="comments"),
+            _make_custom_perm(name="READ_C_2", policy="viewer", collection="comments"),
         ]
         # Should not raise
         validator.validate_custom_permissions(perms, ["articles", "comments"])
@@ -388,8 +388,8 @@ class TestValidateCustomPermissions:
         client = _make_client_with_policies(["editor"])
         validator = Validator(client)
         perms = [
-            _make_custom_perm(name="C_1", policy="ghost1", collection="articles"),
-            _make_custom_perm(name="C_2", policy="ghost2", collection="articles"),
+            _make_custom_perm(name="READ_C_1", policy="ghost1", collection="articles"),
+            _make_custom_perm(name="READ_C_2", policy="ghost2", collection="articles"),
         ]
         with pytest.raises(ValidationError) as exc_info:
             validator.validate_custom_permissions(perms, ["articles"])
@@ -401,8 +401,8 @@ class TestValidateCustomPermissions:
         client = _make_client_with_policies(["editor"])
         validator = Validator(client)
         perms = [
-            _make_custom_perm(name="C_1", policy="editor", collection="col_a"),
-            _make_custom_perm(name="C_2", policy="editor", collection="col_b"),
+            _make_custom_perm(name="READ_C_1", policy="editor", collection="col_a"),
+            _make_custom_perm(name="READ_C_2", policy="editor", collection="col_b"),
         ]
         with pytest.raises(ValidationError) as exc_info:
             validator.validate_custom_permissions(perms, ["articles"])
@@ -414,8 +414,8 @@ class TestValidateCustomPermissions:
         client = _make_client_with_policies(["editor"])
         validator = Validator(client)
         perms = [
-            _make_custom_perm(name="C_1", policy="ghost", collection="articles"),
-            _make_custom_perm(name="C_2", policy="ghost", collection="articles"),
+            _make_custom_perm(name="READ_C_1", policy="ghost", collection="articles"),
+            _make_custom_perm(name="READ_C_2", policy="ghost", collection="articles"),
         ]
         with pytest.raises(ValidationError) as exc_info:
             validator.validate_custom_permissions(perms, ["articles"])
@@ -427,8 +427,8 @@ class TestValidateCustomPermissions:
         client = _make_client_with_policies(["editor"])
         validator = Validator(client)
         perms = [
-            _make_custom_perm(name="C_1", policy="editor", collection="missing"),
-            _make_custom_perm(name="C_2", policy="editor", collection="missing"),
+            _make_custom_perm(name="READ_C_1", policy="editor", collection="missing"),
+            _make_custom_perm(name="READ_C_2", policy="editor", collection="missing"),
         ]
         with pytest.raises(ValidationError) as exc_info:
             validator.validate_custom_permissions(perms, ["articles"])
@@ -439,7 +439,7 @@ class TestValidateCustomPermissions:
         client = _make_client_with_policies(["editor"])
         validator = Validator(client)
         perms = [
-            _make_custom_perm(name="C_1", policy="bad_pol", collection="bad_col"),
+            _make_custom_perm(name="READ_C_1", policy="bad_pol", collection="bad_col"),
         ]
         with pytest.raises(ValidationError) as exc_info:
             validator.validate_custom_permissions(perms, ["articles"])
@@ -520,7 +520,7 @@ def _custom_perms_with_invalid_refs(draw):
         action = draw(st.sampled_from(["create", "read", "update", "delete"]))
         entries.append(
             CustomPermissionEntry(
-                name=f"C_{counter}",
+                name=f"{action.upper()}_C_{counter}",
                 policy=pol,
                 collection=col,
                 action=action,
@@ -534,7 +534,7 @@ def _custom_perms_with_invalid_refs(draw):
         action = draw(st.sampled_from(["create", "read", "update", "delete"]))
         entries.append(
             CustomPermissionEntry(
-                name=f"C_{counter}",
+                name=f"{action.upper()}_C_{counter}",
                 policy=pol,
                 collection=col,
                 action=action,
@@ -550,7 +550,7 @@ def _custom_perms_with_invalid_refs(draw):
         action = draw(st.sampled_from(["create", "read", "update", "delete"]))
         entries.append(
             CustomPermissionEntry(
-                name=f"C_{counter}",
+                name=f"{action.upper()}_C_{counter}",
                 policy=pol,
                 collection=col,
                 action=action,

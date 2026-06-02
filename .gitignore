@@ -1,3 +1,7 @@
 # KIRO
 .hypothesis
 
+
+# python
+directus_ac/__pycache__/*
+tests/__pycache__/*

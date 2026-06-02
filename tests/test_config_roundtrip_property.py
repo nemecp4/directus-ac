@@ -97,7 +97,7 @@ def _custom_permission_entry(draw, counter: int):
     permissions = draw(_opt_permissions)
 
     # Build a deterministic name using C_N pattern
-    entry_name = f"C_{counter}"
+    entry_name = f"{action.upper()}_C_{counter}"
 
     return CustomPermissionEntry(
         name=entry_name,

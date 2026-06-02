@@ -108,7 +108,7 @@ def _entries_with_invalid_refs(draw):
         action = draw(st.sampled_from(["create", "read", "update", "delete"]))
         entries.append(
             CustomPermissionEntry(
-                name=f"C_{counter}",
+                name=f"{action.upper()}_C_{counter}",
                 policy=pol,
                 collection=col,
                 action=action,
@@ -122,7 +122,7 @@ def _entries_with_invalid_refs(draw):
         action = draw(st.sampled_from(["create", "read", "update", "delete"]))
         entries.append(
             CustomPermissionEntry(
-                name=f"C_{counter}",
+                name=f"{action.upper()}_C_{counter}",
                 policy=pol,
                 collection=col,
                 action=action,
@@ -138,7 +138,7 @@ def _entries_with_invalid_refs(draw):
         action = draw(st.sampled_from(["create", "read", "update", "delete"]))
         entries.append(
             CustomPermissionEntry(
-                name=f"C_{counter}",
+                name=f"{action.upper()}_C_{counter}",
                 policy=pol,
                 collection=col,
                 action=action,

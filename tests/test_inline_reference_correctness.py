@@ -360,7 +360,7 @@ def test_inline_refs_follow_c_n_pattern(state) -> None:
     for group in config.groups:
         for role_name, refs in group.custom_permission_refs.items():
             for ref in refs:
-                assert re.fullmatch(r"C_\d+", ref), (
+                assert re.fullmatch(r"[A-Z]+_C_\d+", ref), (
                     f"Reference '{ref}' in group for collections={group.collections}, "
                     f"role='{role_name}' does not match the C_N pattern"
                 )

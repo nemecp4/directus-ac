@@ -133,7 +133,7 @@ def _valid_config_with_inline_refs(draw):
 
         custom_permissions.append(
             CustomPermissionEntry(
-                name=f"C_{i + 1}",
+                name=f"{action.upper()}_C_{i + 1}",
                 policy=policy,
                 collection=collection,
                 action=action,

@@ -416,7 +416,7 @@ class TestApplyCustomPermissions:
         """Creates a permission when no matching existing entry found."""
         manager, mock_client = self._make_manager(existing_perms=[])
         entry = CustomPermissionEntry(
-            name="C_1",
+            name="UPDATE_C_1",
             policy="editor — directus-ac",
             collection="articles",
             action="update",
@@ -451,7 +451,7 @@ class TestApplyCustomPermissions:
         ]
         manager, mock_client = self._make_manager(existing_perms=existing)
         entry = CustomPermissionEntry(
-            name="C_1",
+            name="UPDATE_C_1",
             policy="editor — directus-ac",
             collection="articles",
             action="update",
@@ -476,7 +476,7 @@ class TestApplyCustomPermissions:
         """Raises APIError when policy name cannot be resolved."""
         manager, _ = self._make_manager()
         entry = CustomPermissionEntry(
-            name="C_1",
+            name="READ_C_1",
             policy="nonexistent-policy",
             collection="articles",
             action="read",
@@ -484,7 +484,7 @@ class TestApplyCustomPermissions:
         with pytest.raises(APIError) as exc_info:
             manager.apply_custom_permissions([entry], {})
         assert "Cannot resolve policy 'nonexistent-policy'" in str(exc_info.value)
-        assert "custom permission 'C_1'" in str(exc_info.value)
+        assert "custom permission 'READ_C_1'" in str(exc_info.value)
 
     def test_raises_api_error_on_api_failure(self):
         """Raises APIError with perm name, collection, action on API failure."""
@@ -494,7 +494,7 @@ class TestApplyCustomPermissions:
         manager = PermissionManager(mock_client)
 
         entry = CustomPermissionEntry(
-            name="C_1",
+            name="UPDATE_C_1",
             policy="editor — directus-ac",
             collection="articles",
             action="update",
@@ -504,7 +504,7 @@ class TestApplyCustomPermissions:
         with pytest.raises(APIError) as exc_info:
             manager.apply_custom_permissions([entry], policy_map)
         msg = str(exc_info.value)
-        assert "Failed to apply custom permission 'C_1'" in msg
+        assert "Failed to apply custom permission 'UPDATE_C_1'" in msg
         assert "collection 'articles'" in msg
         assert "action 'update'" in msg
         assert "HTTP 500" in msg
@@ -525,14 +525,14 @@ class TestApplyCustomPermissions:
         manager, mock_client = self._make_manager(existing_perms=existing)
         entries = [
             CustomPermissionEntry(
-                name="C_1",
+                name="READ_C_1",
                 policy="editor — directus-ac",
                 collection="articles",
                 action="read",
                 fields=["title", "body"],
             ),
             CustomPermissionEntry(
-                name="C_2",
+                name="CREATE_C_2",
                 policy="editor — directus-ac",
                 collection="articles",
                 action="create",
@@ -559,7 +559,7 @@ class TestApplyCustomPermissions:
         ]
         manager, mock_client = self._make_manager(existing_perms=existing)
         entry = CustomPermissionEntry(
-            name="C_1",
+            name="READ_C_1",
             policy="editor — directus-ac",
             collection="articles",
             action="read",
@@ -586,7 +586,7 @@ class TestApplyCustomPermissions:
         ]
         manager, mock_client = self._make_manager(existing_perms=existing)
         entry = CustomPermissionEntry(
-            name="C_1",
+            name="READ_C_1",
             policy="editor — directus-ac",
             collection="articles",
             action="read",
@@ -603,14 +603,14 @@ class TestApplyCustomPermissions:
         manager, mock_client = self._make_manager(existing_perms=[])
         entries = [
             CustomPermissionEntry(
-                name="C_5",
+                name="READ_C_5",
                 policy="editor — directus-ac",
                 collection="articles",
                 action="read",
                 validation={"_and": [{"status": {"_eq": "draft"}}]},
             ),
             CustomPermissionEntry(
-                name="C_10",
+                name="READ_C_10",
                 policy="viewer — directus-ac",
                 collection="comments",
                 action="read",
@@ -630,7 +630,7 @@ class TestApplyCustomPermissions:
         """APIError for unresolvable policy includes the C_N Permission_Name."""
         manager, _ = self._make_manager()
         entry = CustomPermissionEntry(
-            name="C_7",
+            name="UPDATE_C_7",
             policy="missing-policy",
             collection="posts",
             action="update",
@@ -649,7 +649,7 @@ class TestApplyCustomPermissions:
         manager = PermissionManager(mock_client)
 
         entry = CustomPermissionEntry(
-            name="C_15",
+            name="DELETE_C_15",
             policy="admin — directus-ac",
             collection="users",
             action="delete",

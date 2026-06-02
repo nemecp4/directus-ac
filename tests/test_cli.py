@@ -576,7 +576,7 @@ class TestGenerateWithCustomPermissions:
             ],
             custom_permissions=[
                 CustomPermissionEntry(
-                    name="C_1",
+                    name="UPDATE_C_1",
                     policy="editor — directus-ac",
                     collection="articles",
                     action="update",
@@ -594,7 +594,7 @@ class TestGenerateWithCustomPermissions:
         yaml_output = (
             "collections:\n- articles\nroles:\n- editor\ngroups:\n"
             "- collections:\n  - articles\n  permissions:\n    editor: READ\n"
-            "custom_permissions:\n- name: C_1\n"
+            "custom_permissions:\n- name: UPDATE_C_1\n"
             "  policy: editor — directus-ac\n  collection: articles\n"
             "  action: update\n  validation:\n    _and:\n    - status:\n"
             "        _eq: draft\n  fields:\n  - title\n  - body\n"
@@ -605,7 +605,7 @@ class TestGenerateWithCustomPermissions:
 
         captured = capsys.readouterr()
         assert "custom_permissions:" in captured.out
-        assert "C_1" in captured.out
+        assert "UPDATE_C_1" in captured.out
         assert "validation:" in captured.out
         mock_generator_instance.generate.assert_called_once()
         mock_serialize.assert_called_once_with(config)
@@ -678,7 +678,7 @@ class TestUpdateWithCustomPermissions:
         )
 
         custom_perm = CustomPermissionEntry(
-            name="C_1",
+            name="UPDATE_C_1",
             policy="editor — directus-ac",
             collection="articles",
             action="update",
@@ -740,14 +740,14 @@ class TestUpdateWithCustomPermissions:
 
         custom_perms = [
             CustomPermissionEntry(
-                name="C_1",
+                name="UPDATE_C_1",
                 policy="editor — directus-ac",
                 collection="articles",
                 action="update",
                 validation={"_and": [{"status": {"_eq": "draft"}}]},
             ),
             CustomPermissionEntry(
-                name="C_2",
+                name="READ_C_2",
                 policy="editor — directus-ac",
                 collection="articles",
                 action="read",
@@ -802,7 +802,7 @@ class TestUpdateWithCustomPermissions:
 
         custom_perms = [
             CustomPermissionEntry(
-                name="C_1",
+                name="UPDATE_C_1",
                 policy="editor — directus-ac",
                 collection="articles",
                 action="update",

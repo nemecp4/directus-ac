@@ -235,7 +235,7 @@ class Generator:
                 continue
 
             counter += 1
-            name = generate_permission_name(counter)
+            name = generate_permission_name(perm.action, counter)
             entry = CustomPermissionEntry(
                 name=name,
                 policy=policy_name,

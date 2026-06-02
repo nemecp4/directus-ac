@@ -174,7 +174,7 @@ def test_counter_global_sequence_starts_at_1_and_increments(state) -> None:
 
     # Verify counter starts at 1 and increments by 1
     for i, entry in enumerate(config.custom_permissions, start=1):
-        expected_name = f"C_{i}"
+        expected_name = generate_permission_name(entry.action, i)
         assert entry.name == expected_name, (
             f"Entry at position {i} should have name '{expected_name}', "
             f"got '{entry.name}'. "
@@ -209,7 +209,7 @@ def test_counter_assigned_by_ascending_permission_id(state) -> None:
     for i, (entry, perm) in enumerate(
         zip(config.custom_permissions, sorted_perms), start=1
     ):
-        expected_name = f"C_{i}"
+        expected_name = generate_permission_name(perm.action, i)
         assert entry.name == expected_name, (
             f"Counter {i} (perm id={perm.id}) should have name "
             f"'{expected_name}', got '{entry.name}'"

@@ -35,7 +35,7 @@ _valid_string = st.text(
 )
 
 # Valid C_N name pattern
-_valid_name = st.integers(min_value=1, max_value=1000).map(lambda n: f"C_{n}")
+_valid_name = st.tuples(st.sampled_from(["CREATE", "READ", "UPDATE", "DELETE"]), st.integers(min_value=1, max_value=1000)).map(lambda t: f"{t[0]}_C_{t[1]}")
 
 # Valid actions
 _valid_action = st.sampled_from(["create", "read", "update", "delete"])

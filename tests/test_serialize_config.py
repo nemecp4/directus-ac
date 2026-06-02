@@ -376,19 +376,19 @@ class TestSerializeConfigInlineCustomRefs:
                 GroupDefinition(
                     collections=["articles"],
                     permissions={"editor": [PermissionKeyword.READ, PermissionKeyword.WRITE]},
-                    custom_permission_refs={"editor": ["C_1", "C_2"]},
+                    custom_permission_refs={"editor": ["UPDATE_C_1", "READ_C_2"]},
                 )
             ],
             custom_permissions=[
-                CustomPermissionEntry(name="C_1", policy="p", collection="articles", action="update"),
-                CustomPermissionEntry(name="C_2", policy="p", collection="articles", action="read"),
+                CustomPermissionEntry(name="UPDATE_C_1", policy="p", collection="articles", action="update"),
+                CustomPermissionEntry(name="READ_C_2", policy="p", collection="articles", action="read"),
             ],
         )
 
         result = serialize_config(config)
         parsed = yaml.safe_load(result)
 
-        assert parsed["groups"][0]["permissions"]["editor"] == "READ WRITE C_1 C_2"
+        assert parsed["groups"][0]["permissions"]["editor"] == "READ WRITE UPDATE_C_1 READ_C_2"
 
     def test_custom_refs_only_no_standard_keywords(self):
         """A role with only custom refs and no standard keywords."""
@@ -399,18 +399,18 @@ class TestSerializeConfigInlineCustomRefs:
                 GroupDefinition(
                     collections=["articles"],
                     permissions={},
-                    custom_permission_refs={"viewer": ["C_1"]},
+                    custom_permission_refs={"viewer": ["READ_C_1"]},
                 )
             ],
             custom_permissions=[
-                CustomPermissionEntry(name="C_1", policy="p", collection="articles", action="read"),
+                CustomPermissionEntry(name="READ_C_1", policy="p", collection="articles", action="read"),
             ],
         )
 
         result = serialize_config(config)
         parsed = yaml.safe_load(result)
 
-        assert parsed["groups"][0]["permissions"]["viewer"] == "C_1"
+        assert parsed["groups"][0]["permissions"]["viewer"] == "READ_C_1"
 
     def test_multiple_roles_with_different_refs(self):
         """Different roles can have different custom refs."""
@@ -425,22 +425,22 @@ class TestSerializeConfigInlineCustomRefs:
                         "viewer": [PermissionKeyword.READ],
                     },
                     custom_permission_refs={
-                        "editor": ["C_1"],
-                        "viewer": ["C_2"],
+                        "editor": ["UPDATE_C_1"],
+                        "viewer": ["READ_C_2"],
                     },
                 )
             ],
             custom_permissions=[
-                CustomPermissionEntry(name="C_1", policy="p", collection="articles", action="update"),
-                CustomPermissionEntry(name="C_2", policy="p", collection="articles", action="read"),
+                CustomPermissionEntry(name="UPDATE_C_1", policy="p", collection="articles", action="update"),
+                CustomPermissionEntry(name="READ_C_2", policy="p", collection="articles", action="read"),
             ],
         )
 
         result = serialize_config(config)
         parsed = yaml.safe_load(result)
 
-        assert parsed["groups"][0]["permissions"]["editor"] == "READ WRITE C_1"
-        assert parsed["groups"][0]["permissions"]["viewer"] == "READ C_2"
+        assert parsed["groups"][0]["permissions"]["editor"] == "READ WRITE UPDATE_C_1"
+        assert parsed["groups"][0]["permissions"]["viewer"] == "READ READ_C_2"
 
     def test_role_in_refs_but_not_in_permissions(self):
         """A role that only appears in custom_permission_refs is still serialized."""
@@ -451,18 +451,18 @@ class TestSerializeConfigInlineCustomRefs:
                 GroupDefinition(
                     collections=["articles"],
                     permissions={"editor": [PermissionKeyword.READ]},
-                    custom_permission_refs={"custom_only": ["C_1"]},
+                    custom_permission_refs={"custom_only": ["READ_C_1"]},
                 )
             ],
             custom_permissions=[
-                CustomPermissionEntry(name="C_1", policy="p", collection="articles", action="read"),
+                CustomPermissionEntry(name="READ_C_1", policy="p", collection="articles", action="read"),
             ],
         )
 
         result = serialize_config(config)
         parsed = yaml.safe_load(result)
 
-        assert parsed["groups"][0]["permissions"]["custom_only"] == "C_1"
+        assert parsed["groups"][0]["permissions"]["custom_only"] == "READ_C_1"
         assert parsed["groups"][0]["permissions"]["editor"] == "READ"
 
     def test_no_custom_refs_produces_standard_output(self):
@@ -492,11 +492,11 @@ class TestSerializeConfigInlineCustomRefs:
                 GroupDefinition(
                     collections=["articles"],
                     permissions={"editor": [PermissionKeyword.READ]},
-                    custom_permission_refs={"editor": ["C_1"]},
+                    custom_permission_refs={"editor": ["READ_C_1"]},
                 )
             ],
             custom_permissions=[
-                CustomPermissionEntry(name="C_1", policy="p", collection="articles", action="read"),
+                CustomPermissionEntry(name="READ_C_1", policy="p", collection="articles", action="read"),
             ],
         )
 
@@ -535,7 +535,7 @@ class TestSerializeConfigCustomPermissions:
         """custom_permissions key is present when list is non-empty."""
         config = self._base_config(custom_permissions=[
             CustomPermissionEntry(
-                name="C_1",
+                name="READ_C_1",
                 policy="editor policy",
                 collection="articles",
                 action="read",
@@ -551,7 +551,7 @@ class TestSerializeConfigCustomPermissions:
         """Each entry has name, policy, collection, action."""
         config = self._base_config(custom_permissions=[
             CustomPermissionEntry(
-                name="C_1",
+                name="UPDATE_C_1",
                 policy="editor policy",
                 collection="articles",
                 action="update",
@@ -560,7 +560,7 @@ class TestSerializeConfigCustomPermissions:
         result = serialize_config(config)
         parsed = yaml.safe_load(result)
         entry = parsed["custom_permissions"][0]
-        assert entry["name"] == "C_1"
+        assert entry["name"] == "UPDATE_C_1"
         assert entry["policy"] == "editor policy"
         assert entry["collection"] == "articles"
         assert entry["action"] == "update"
@@ -570,7 +570,7 @@ class TestSerializeConfigCustomPermissions:
         validation = {"_and": [{"status": {"_eq": "draft"}}]}
         config = self._base_config(custom_permissions=[
             CustomPermissionEntry(
-                name="C_1",
+                name="UPDATE_C_1",
                 policy="editor policy",
                 collection="articles",
                 action="update",
@@ -586,7 +586,7 @@ class TestSerializeConfigCustomPermissions:
         """fields is included when non-null and non-empty."""
         config = self._base_config(custom_permissions=[
             CustomPermissionEntry(
-                name="C_1",
+                name="UPDATE_C_1",
                 policy="editor policy",
                 collection="articles",
                 action="update",
@@ -603,7 +603,7 @@ class TestSerializeConfigCustomPermissions:
         perms = {"_and": [{"author": {"_eq": "$CURRENT_USER"}}]}
         config = self._base_config(custom_permissions=[
             CustomPermissionEntry(
-                name="C_1",
+                name="READ_C_1",
                 policy="editor policy",
                 collection="articles",
                 action="read",
@@ -619,7 +619,7 @@ class TestSerializeConfigCustomPermissions:
         """Optional attributes that are None are not included in output."""
         config = self._base_config(custom_permissions=[
             CustomPermissionEntry(
-                name="C_1",
+                name="READ_C_1",
                 policy="editor policy",
                 collection="articles",
                 action="read",
@@ -639,7 +639,7 @@ class TestSerializeConfigCustomPermissions:
         """Empty dict validation is not included in output."""
         config = self._base_config(custom_permissions=[
             CustomPermissionEntry(
-                name="C_1",
+                name="READ_C_1",
                 policy="editor policy",
                 collection="articles",
                 action="read",
@@ -655,7 +655,7 @@ class TestSerializeConfigCustomPermissions:
         """Empty list fields is not included in output."""
         config = self._base_config(custom_permissions=[
             CustomPermissionEntry(
-                name="C_1",
+                name="READ_C_1",
                 policy="editor policy",
                 collection="articles",
                 action="read",
@@ -671,7 +671,7 @@ class TestSerializeConfigCustomPermissions:
         """Empty dict permissions is not included in output."""
         config = self._base_config(custom_permissions=[
             CustomPermissionEntry(
-                name="C_1",
+                name="READ_C_1",
                 policy="editor policy",
                 collection="articles",
                 action="read",
@@ -687,7 +687,7 @@ class TestSerializeConfigCustomPermissions:
         """Top-level keys appear in order: collections, roles, groups, custom_permissions."""
         config = self._base_config(custom_permissions=[
             CustomPermissionEntry(
-                name="C_1",
+                name="READ_C_1",
                 policy="editor policy",
                 collection="articles",
                 action="read",
@@ -707,7 +707,7 @@ class TestSerializeConfigCustomPermissions:
         """Multiple custom permission entries are all serialized."""
         config = self._base_config(custom_permissions=[
             CustomPermissionEntry(
-                name="C_1",
+                name="UPDATE_C_1",
                 policy="editor policy",
                 collection="articles",
                 action="update",
@@ -715,7 +715,7 @@ class TestSerializeConfigCustomPermissions:
                 fields=["title", "body"],
             ),
             CustomPermissionEntry(
-                name="C_2",
+                name="READ_C_2",
                 policy="editor policy",
                 collection="articles",
                 action="read",
@@ -726,8 +726,8 @@ class TestSerializeConfigCustomPermissions:
         parsed = yaml.safe_load(result)
 
         assert len(parsed["custom_permissions"]) == 2
-        assert parsed["custom_permissions"][0]["name"] == "C_1"
-        assert parsed["custom_permissions"][1]["name"] == "C_2"
+        assert parsed["custom_permissions"][0]["name"] == "UPDATE_C_1"
+        assert parsed["custom_permissions"][1]["name"] == "READ_C_2"
         assert "validation" in parsed["custom_permissions"][0]
         assert "fields" in parsed["custom_permissions"][0]
         assert "permissions" in parsed["custom_permissions"][1]

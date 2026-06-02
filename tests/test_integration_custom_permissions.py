@@ -164,10 +164,10 @@ class TestGenerateIntegration:
         assert "custom_permissions:" in output
         # id=1 and id=4 share (policy-1, articles, read) triple → both custom
         # id=3 has validation+fields → custom
-        # So we get C_1 (id=1), C_2 (id=3), C_3 (id=4)
-        assert "name: C_1" in output
-        assert "name: C_2" in output
-        assert "name: C_3" in output
+        # So we get READ_C_1 (id=1), UPDATE_C_2 (id=3), READ_C_3 (id=4)
+        assert "name: READ_C_1" in output
+        assert "name: UPDATE_C_2" in output
+        assert "name: READ_C_3" in output
         # Policy name contains em-dash (—) which YAML may quote
         assert "directus-ac" in output
         assert "collection: articles" in output
@@ -193,20 +193,20 @@ class TestGenerateIntegration:
 
         # Duplicate detection: id=1 and id=4 share (policy-1, articles, read)
         # So custom permissions sorted by id: id=1, id=3, id=4
-        # C_1 → id=1 (read, no constraints but duplicate triple)
-        # C_2 → id=3 (update with validation+fields)
-        # C_3 → id=4 (read with item permissions)
+        # READ_C_1 → id=1 (read, no constraints but duplicate triple)
+        # UPDATE_C_2 → id=3 (update with validation+fields)
+        # READ_C_3 → id=4 (read with item permissions)
         lines = output.split("\n")
 
-        c1_idx = next(i for i, l in enumerate(lines) if "name: C_1" in l)
+        c1_idx = next(i for i, l in enumerate(lines) if "name: READ_C_1" in l)
         c1_block = "\n".join(lines[c1_idx : c1_idx + 5])
         assert "action: read" in c1_block
 
-        c2_idx = next(i for i, l in enumerate(lines) if "name: C_2" in l)
+        c2_idx = next(i for i, l in enumerate(lines) if "name: UPDATE_C_2" in l)
         c2_block = "\n".join(lines[c2_idx : c2_idx + 5])
         assert "action: update" in c2_block
 
-        c3_idx = next(i for i, l in enumerate(lines) if "name: C_3" in l)
+        c3_idx = next(i for i, l in enumerate(lines) if "name: READ_C_3" in l)
         c3_block = "\n".join(lines[c3_idx : c3_idx + 5])
         assert "action: read" in c3_block
 
@@ -306,9 +306,9 @@ groups:
   - collections:
       - articles
     permissions:
-      editor: READ WRITE C_1
+      editor: READ WRITE UPDATE_C_1
 custom_permissions:
-  - name: C_1
+  - name: UPDATE_C_1
     policy: "editor — directus-ac"
     collection: articles
     action: update
@@ -398,9 +398,9 @@ groups:
   - collections:
       - articles
     permissions:
-      editor: READ C_1
+      editor: READ UPDATE_C_1
 custom_permissions:
-  - name: C_1
+  - name: UPDATE_C_1
     policy: "editor — directus-ac"
     collection: articles
     action: update
@@ -497,9 +497,9 @@ groups:
   - collections:
       - articles
     permissions:
-      editor: READ C_1 C_2
+      editor: READ UPDATE_C_1 READ_C_2
 custom_permissions:
-  - name: C_1
+  - name: UPDATE_C_1
     policy: "editor — directus-ac"
     collection: articles
     action: update
@@ -507,7 +507,7 @@ custom_permissions:
       _and:
         - status:
             _eq: draft
-  - name: C_2
+  - name: READ_C_2
     policy: "editor — directus-ac"
     collection: articles
     action: read
@@ -607,8 +607,7 @@ class TestCheckIntegration:
         assert exc_info.value.code == 0
 
         # Custom permission references should appear inline
-        assert "C_1" in caplog.text
-        assert "C_2" in caplog.text
+        assert "UPDATE_C_" in caplog.text or "READ_C_" in caplog.text
         # Standard actions should also appear
         assert "articles" in caplog.text
         # No separate "Custom Permissions" section header

@@ -151,7 +151,7 @@ class CheckCommand:
                 key=lambda p: p.id,
             )
             for counter, perm in enumerate(custom_perms_sorted, start=1):
-                custom_name_map[perm.id] = generate_permission_name(counter)
+                custom_name_map[perm.id] = generate_permission_name(perm.action, counter)
 
         # Build a lookup from permission id -> DirectusPermission for custom perms
         perm_by_id: dict[int, DirectusPermission] = {p.id: p for p in permissions}

@@ -176,32 +176,34 @@ def _custom_permissions_state(draw):
 
 
 @given(
+    action=st.sampled_from(["create", "read", "update", "delete"]),
     counter=st.integers(min_value=1, max_value=10000),
 )
 @settings(max_examples=100)
 def test_generate_permission_name_c_n_format(
+    action: str,
     counter: int,
 ) -> None:
-    """Property 3: Permission name follows C_N pattern.
+    """Property 3: Permission name follows {ACTION}_C_N pattern.
 
-    For any positive integer counter, generate_permission_name SHALL return
-    a string matching the pattern C_{counter} (e.g., C_1, C_2, C_3).
+    For any positive integer counter and valid action, generate_permission_name
+    SHALL return a string matching the pattern {ACTION}_C_{counter}.
 
     **Validates: Requirements 2.1, 2.3**
     """
     import re
 
-    result = generate_permission_name(counter)
+    result = generate_permission_name(action, counter)
 
-    # Must match C_N pattern
-    assert re.fullmatch(r"C_\d+", result), (
-        f"Generated name '{result}' does not match C_N pattern "
-        f"(counter={counter})"
+    # Must match ACTION_C_N pattern
+    assert re.fullmatch(r"[A-Z]+_C_\d+", result), (
+        f"Generated name '{result}' does not match ACTION_C_N pattern "
+        f"(action={action}, counter={counter})"
     )
 
-    # Must be exactly C_{counter}
-    assert result == f"C_{counter}", (
-        f"Generated name '{result}' does not equal expected 'C_{counter}'"
+    # Must be exactly {ACTION}_C_{counter}
+    assert result == f"{action.upper()}_C_{counter}", (
+        f"Generated name '{result}' does not equal expected '{action.upper()}_C_{counter}'"
     )
 
 
@@ -350,7 +352,7 @@ def test_counter_assignment_determinism(state) -> None:
     # Verify global counter assignment: perm with lowest id gets counter 1, etc.
     for global_counter, perm in enumerate(resolvable_perms, start=1):
         policy_name = policy_id_to_name[perm.policy]
-        expected_name = generate_permission_name(global_counter)
+        expected_name = generate_permission_name(perm.action, global_counter)
 
         # The entry at position (global_counter - 1) should have this name
         entry = config.custom_permissions[global_counter - 1]
@@ -651,7 +653,7 @@ def _config_with_custom_permissions(draw):
             else:
                 item_permissions = {"_and": [{"author": {"_eq": "$CURRENT_USER"}}]}
 
-        name = generate_permission_name(i + 1)
+        name = generate_permission_name(action, i + 1)
         custom_entries.append(
             CustomPermissionEntry(
                 name=name,
@@ -933,20 +935,22 @@ def _entry_missing_required_field(draw):
     num_valid_before = draw(st.integers(min_value=0, max_value=3))
     valid_entries = []
     for i in range(num_valid_before):
+        action = draw(st.sampled_from(_VALID_ACTIONS))
         valid_entries.append({
-            "name": f"C_{i + 1}",
+            "name": f"{action.upper()}_C_{i + 1}",
             "policy": draw(_valid_field_value),
             "collection": draw(_valid_field_value),
-            "action": draw(st.sampled_from(_VALID_ACTIONS)),
+            "action": action,
         })
 
     # Create an entry with one required field missing
     field_to_remove = draw(st.sampled_from(_REQUIRED_FIELDS))
+    entry_action = draw(st.sampled_from(_VALID_ACTIONS))
     invalid_entry = {
-        "name": f"C_{num_valid_before + 1}",
+        "name": f"{entry_action.upper()}_C_{num_valid_before + 1}",
         "policy": draw(_valid_field_value),
         "collection": draw(_valid_field_value),
-        "action": draw(st.sampled_from(_VALID_ACTIONS)),
+        "action": entry_action,
     }
     del invalid_entry[field_to_remove]
 
@@ -967,17 +971,18 @@ def _entry_with_invalid_action(draw):
     num_valid_before = draw(st.integers(min_value=0, max_value=3))
     valid_entries = []
     for i in range(num_valid_before):
+        action = draw(st.sampled_from(_VALID_ACTIONS))
         valid_entries.append({
-            "name": f"C_{i + 1}",
+            "name": f"{action.upper()}_C_{i + 1}",
             "policy": draw(_valid_field_value),
             "collection": draw(_valid_field_value),
-            "action": draw(st.sampled_from(_VALID_ACTIONS)),
+            "action": action,
         })
 
     # Create an entry with an invalid action value
     bad_action = draw(_invalid_action)
     invalid_entry = {
-        "name": f"C_{num_valid_before + 1}",
+        "name": f"READ_C_{num_valid_before + 1}",
         "policy": draw(_valid_field_value),
         "collection": draw(_valid_field_value),
         "action": bad_action,
@@ -1213,7 +1218,7 @@ def test_check_command_custom_permission_formatting(data) -> None:
 
     # Verify each custom permission's C_N reference and indicators appear in the output
     for counter, perm in enumerate(sorted_perms, start=1):
-        expected_name = generate_permission_name(counter)
+        expected_name = generate_permission_name(perm.action, counter)
 
         # The C_N reference must appear in the output
         assert expected_name in result, (
@@ -1327,7 +1332,7 @@ def _custom_perms_with_existing_state(draw):
 
         custom_entries.append(
             CustomPermissionEntry(
-                name=f"C_{i + 1}",
+                name=f"{action.upper()}_C_{i + 1}",
                 policy=policy_name,
                 collection=collection,
                 action=action,

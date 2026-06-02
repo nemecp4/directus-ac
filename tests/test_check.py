@@ -1502,7 +1502,7 @@ class TestInlineCustomPermissions:
 
         result = cmd._format_policies(permissions, policies, roles)
         # Standard action and custom ref should be in the same collection line
-        assert "articles: read, C_1 has validation" in result
+        assert "articles: read, UPDATE_C_1 has validation" in result
 
     def test_custom_permission_with_fields_inline(self) -> None:
         """Custom permission with fields shows 'fields:(...)' inline.
@@ -1524,7 +1524,7 @@ class TestInlineCustomPermissions:
         roles = [DirectusRole(id="role-1", name="Editor")]
 
         result = cmd._format_policies(permissions, policies, roles)
-        assert "articles: read, C_1 fields:(title,body)" in result
+        assert "articles: read, UPDATE_C_1 fields:(title,body)" in result
 
     def test_custom_permission_with_item_permissions_inline(self) -> None:
         """Custom permission with item permissions shows 'has item permissions' inline.
@@ -1546,7 +1546,7 @@ class TestInlineCustomPermissions:
         roles = [DirectusRole(id="role-1", name="Editor")]
 
         result = cmd._format_policies(permissions, policies, roles)
-        assert "articles: read, C_1 has item permissions" in result
+        assert "articles: read, UPDATE_C_1 has item permissions" in result
 
     def test_custom_permission_with_all_indicators_inline(self) -> None:
         """Custom permission with all constraints shows all indicators inline.
@@ -1570,7 +1570,7 @@ class TestInlineCustomPermissions:
         roles = [DirectusRole(id="role-1", name="Editor")]
 
         result = cmd._format_policies(permissions, policies, roles)
-        assert "C_1 fields:(title,body) has validation has item permissions" in result
+        assert "UPDATE_C_1 fields:(title,body) has validation has item permissions" in result
 
     def test_multiple_custom_permissions_inline(self) -> None:
         """Multiple custom permissions appear inline in the same collection line.
@@ -1601,7 +1601,7 @@ class TestInlineCustomPermissions:
 
         result = cmd._format_policies(permissions, policies, roles)
         # Standard action first, then custom refs
-        assert "articles: read, C_1 fields:(title) has validation, C_2 has item permissions" in result
+        assert "articles: read, UPDATE_C_1 fields:(title) has validation, CREATE_C_2 has item permissions" in result
 
     def test_duplicate_triple_marks_all_as_custom_inline(self) -> None:
         """Duplicate (policy, collection, action) triples mark all entries as custom inline.
@@ -1618,9 +1618,9 @@ class TestInlineCustomPermissions:
         roles = [DirectusRole(id="role-1", name="Editor")]
 
         result = cmd._format_policies(permissions, policies, roles)
-        # Both should be shown as custom refs (C_1, C_2) since they share a triple
-        assert "C_1" in result
-        assert "C_2" in result
+        # Both should be shown as custom refs (READ_C_1, READ_C_2) since they share a triple
+        assert "READ_C_1" in result
+        assert "READ_C_2" in result
 
     def test_fields_star_not_treated_as_custom(self) -> None:
         """Permission with fields=["*"] is NOT treated as custom.
@@ -1676,7 +1676,7 @@ class TestInlineCustomPermissions:
         output = caplog.text
         # Custom permissions are inline, no separate "Custom Permissions" section
         assert "Custom Permissions" not in output
-        assert "C_1 has validation" in output
+        assert "UPDATE_C_1 has validation" in output
 
     def test_run_no_custom_permissions_no_references(self, caplog) -> None:
         """CheckCommand.run() shows no C_N references when no custom permissions exist.
@@ -1733,4 +1733,4 @@ class TestInlineCustomPermissions:
 
         result = cmd._format_policies(permissions, policies, roles)
         # Standard actions first, then custom refs
-        assert "articles: read, create, C_1 fields:(title,body), C_2 has validation" in result
+        assert "articles: read, create, UPDATE_C_1 fields:(title,body), DELETE_C_2 has validation" in result

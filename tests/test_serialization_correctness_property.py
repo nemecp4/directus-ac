@@ -148,10 +148,10 @@ def _config_with_custom_permissions(draw):
     custom_refs_for_role: dict[str, list[str]] = {}
 
     for i in range(1, num_custom + 1):
-        name = f"C_{i}"
         policy = draw(_policy_name)
         collection = draw(st.sampled_from(collections))
         action = draw(_action)
+        name = f"{action.upper()}_C_{i}"
         validation = draw(_opt_validation)
         fields = draw(_opt_fields)
         permissions = draw(_opt_permissions)
@@ -306,7 +306,7 @@ def test_permission_set_strings_contain_inline_c_n_references(
                     f"but tokens are: {tokens}"
                 )
                 # Verify it matches the C_N pattern
-                assert re.fullmatch(r"C_\d+", ref), (
+                assert re.fullmatch(r"[A-Z]+_C_\d+", ref), (
                     f"Reference '{ref}' does not match C_N pattern"
                 )
 
@@ -336,7 +336,7 @@ def test_custom_permission_entries_contain_only_non_null_non_empty_optional_attr
         assert "action" in entry, f"Entry {i}: missing required field 'action'"
 
         # Verify name matches C_N pattern
-        assert re.fullmatch(r"C_\d+", entry["name"]), (
+        assert re.fullmatch(r"[A-Z]+_C_\d+", entry["name"]), (
             f"Entry {i}: name '{entry['name']}' does not match C_N pattern"
         )
 

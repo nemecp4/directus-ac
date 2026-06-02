@@ -28,8 +28,8 @@ _REQUIRED_KEYS = ("collections", "roles", "groups")
 # Valid keyword strings for quick membership tests.
 _VALID_KEYWORDS: frozenset[str] = frozenset(kw.value for kw in PermissionKeyword)
 
-# Pattern for custom permission references (e.g., C_1, C_2, C_3).
-_CUSTOM_REF_PATTERN: re.Pattern[str] = re.compile(r"^C_\d+$")
+# Pattern for custom permission references (e.g., CREATE_C_1, READ_C_2).
+_CUSTOM_REF_PATTERN: re.Pattern[str] = re.compile(r"^[A-Z]+_C_\d+$")
 
 # Valid action values for custom permissions (case-insensitive).
 _VALID_ACTIONS: frozenset[str] = frozenset(("create", "read", "update", "delete"))
@@ -194,11 +194,11 @@ def _parse_custom_permissions(raw: Any) -> list[CustomPermissionEntry]:
                     f"got {len(value)}"
                 )
 
-        # Validate name matches C_\d+ pattern.
+        # Validate name matches ACTION_C_\d+ pattern.
         if not _CUSTOM_REF_PATTERN.match(entry["name"]):
             raise ConfigError(
                 f"Custom permission at index {idx} has invalid name "
-                f"'{entry['name']}'. Must match pattern C_N (e.g., C_1, C_2)"
+                f"'{entry['name']}'. Must match pattern ACTION_C_N (e.g., UPDATE_C_1, READ_C_2)"
             )
 
         # Validate action value (case-insensitive).

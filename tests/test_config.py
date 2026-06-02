@@ -181,7 +181,7 @@ class TestLoadConfigValid:
         }
 
     def test_mixed_permission_set_with_custom_refs(self, tmp_path):
-        """Req 3.1, 3.2: Permission_Set with keywords and C_N refs is parsed correctly."""
+        """Req 3.1, 3.2: Permission_Set with keywords and ACTION_C_N refs is parsed correctly."""
         yaml_content = """\
             collections:
               - articles
@@ -191,13 +191,13 @@ class TestLoadConfigValid:
               - collections:
                   - articles
                 permissions:
-                  editor: "READ WRITE C_1 C_2"
+                  editor: "READ WRITE UPDATE_C_1 CREATE_C_2"
             custom_permissions:
-              - name: C_1
+              - name: UPDATE_C_1
                 policy: editor
                 collection: articles
                 action: update
-              - name: C_2
+              - name: CREATE_C_2
                 policy: editor
                 collection: articles
                 action: create
@@ -209,10 +209,10 @@ class TestLoadConfigValid:
             PermissionKeyword.READ,
             PermissionKeyword.WRITE,
         }
-        assert group.custom_permission_refs["editor"] == ["C_1", "C_2"]
+        assert group.custom_permission_refs["editor"] == ["UPDATE_C_1", "CREATE_C_2"]
 
     def test_custom_refs_only_permission_set(self, tmp_path):
-        """A Permission_Set with only C_N refs and no standard keywords."""
+        """A Permission_Set with only ACTION_C_N refs and no standard keywords."""
         yaml_content = """\
             collections:
               - articles
@@ -222,9 +222,9 @@ class TestLoadConfigValid:
               - collections:
                   - articles
                 permissions:
-                  editor: "C_1"
+                  editor: "READ_C_1"
             custom_permissions:
-              - name: C_1
+              - name: READ_C_1
                 policy: editor
                 collection: articles
                 action: read
@@ -233,7 +233,7 @@ class TestLoadConfigValid:
         cfg = load_config(path)
         group = cfg.groups[0]
         assert group.permissions["editor"] == []
-        assert group.custom_permission_refs["editor"] == ["C_1"]
+        assert group.custom_permission_refs["editor"] == ["READ_C_1"]
 
     def test_no_custom_refs_means_empty_custom_permission_refs(self, tmp_path):
         """When no C_N tokens are present, custom_permission_refs is empty."""
@@ -502,32 +502,32 @@ class TestParsePermissionSet:
         assert custom_refs == []
 
     def test_custom_ref_single(self):
-        """C_N tokens are recognized as custom permission references."""
-        keywords, custom_refs = _parse_permission_set("C_1", role="r", collection="c")
+        """ACTION_C_N tokens are recognized as custom permission references."""
+        keywords, custom_refs = _parse_permission_set("READ_C_1", role="r", collection="c")
         assert keywords == []
-        assert custom_refs == ["C_1"]
+        assert custom_refs == ["READ_C_1"]
 
     def test_custom_ref_multiple(self):
         """Multiple C_N tokens are collected."""
-        keywords, custom_refs = _parse_permission_set("C_1 C_2 C_3", role="r", collection="c")
+        keywords, custom_refs = _parse_permission_set("READ_C_1 READ_C_2 READ_C_3", role="r", collection="c")
         assert keywords == []
-        assert custom_refs == ["C_1", "C_2", "C_3"]
+        assert custom_refs == ["READ_C_1", "READ_C_2", "READ_C_3"]
 
     def test_mixed_keywords_and_custom_refs(self):
-        """Standard keywords and C_N tokens can be mixed."""
-        keywords, custom_refs = _parse_permission_set("READ C_1 WRITE C_2", role="r", collection="c")
+        """Standard keywords and ACTION_C_N tokens can be mixed."""
+        keywords, custom_refs = _parse_permission_set("READ READ_C_1 WRITE UPDATE_C_2", role="r", collection="c")
         assert set(keywords) == {PermissionKeyword.READ, PermissionKeyword.WRITE}
-        assert custom_refs == ["C_1", "C_2"]
+        assert custom_refs == ["READ_C_1", "UPDATE_C_2"]
 
     def test_custom_ref_deduplication(self):
         """Duplicate C_N tokens are deduplicated."""
-        keywords, custom_refs = _parse_permission_set("C_1 C_1 C_2", role="r", collection="c")
-        assert custom_refs == ["C_1", "C_2"]
+        keywords, custom_refs = _parse_permission_set("READ_C_1 READ_C_1 READ_C_2", role="r", collection="c")
+        assert custom_refs == ["READ_C_1", "READ_C_2"]
 
     def test_custom_ref_large_number(self):
         """C_N with large counter values are accepted."""
-        keywords, custom_refs = _parse_permission_set("C_999", role="r", collection="c")
-        assert custom_refs == ["C_999"]
+        keywords, custom_refs = _parse_permission_set("READ_C_999", role="r", collection="c")
+        assert custom_refs == ["READ_C_999"]
 
     def test_invalid_c_prefix_without_digits_raises(self):
         """C_ without digits is not a valid token."""
@@ -612,7 +612,7 @@ YAML_WITH_CUSTOM_PERMISSIONS = """\
         permissions:
           editor: "READ WRITE"
     custom_permissions:
-      - name: C_1
+      - name: UPDATE_C_1
         policy: editor
         collection: articles
         action: update
@@ -639,7 +639,7 @@ class TestLoadConfigCustomPermissionsValid:
         cfg = load_config(path)
         assert len(cfg.custom_permissions) == 1
         entry = cfg.custom_permissions[0]
-        assert entry.name == "C_1"
+        assert entry.name == "UPDATE_C_1"
         assert entry.policy == "editor"
         assert entry.collection == "articles"
         assert entry.action == "update"
@@ -660,7 +660,7 @@ class TestLoadConfigCustomPermissionsValid:
                 permissions:
                   editor: "READ"
             custom_permissions:
-              - name: C_1
+              - name: UPDATE_C_1
                 policy: editor
                 collection: articles
                 action: UPDATE
@@ -682,7 +682,7 @@ class TestLoadConfigCustomPermissionsValid:
                 permissions:
                   editor: "READ"
             custom_permissions:
-              - name: C_1
+              - name: CREATE_C_1
                 policy: editor
                 collection: articles
                 action: Create
@@ -704,7 +704,7 @@ class TestLoadConfigCustomPermissionsValid:
                 permissions:
                   editor: "READ"
             custom_permissions:
-              - name: C_1
+              - name: READ_C_1
                 policy: editor
                 collection: articles
                 action: read
@@ -729,11 +729,11 @@ class TestLoadConfigCustomPermissionsValid:
                 permissions:
                   editor: "READ"
             custom_permissions:
-              - name: C_1
+              - name: CREATE_C_1
                 policy: editor
                 collection: articles
                 action: create
-              - name: C_2
+              - name: DELETE_C_2
                 policy: editor
                 collection: articles
                 action: delete
@@ -741,8 +741,8 @@ class TestLoadConfigCustomPermissionsValid:
         path = _write_yaml(tmp_path, yaml_content)
         cfg = load_config(path)
         assert len(cfg.custom_permissions) == 2
-        assert cfg.custom_permissions[0].name == "C_1"
-        assert cfg.custom_permissions[1].name == "C_2"
+        assert cfg.custom_permissions[0].name == "CREATE_C_1"
+        assert cfg.custom_permissions[1].name == "DELETE_C_2"
 
 
 class TestLoadConfigCustomPermissionsErrors:
@@ -880,7 +880,7 @@ class TestLoadConfigCustomPermissionsErrors:
                 permissions:
                   editor: "READ"
             custom_permissions:
-              - name: C_1
+              - name: READ_C_1
                 policy: editor
                 collection: articles
                 action: execute
@@ -902,7 +902,7 @@ class TestLoadConfigCustomPermissionsErrors:
                 permissions:
                   editor: "READ"
             custom_permissions:
-              - name: C_1
+              - name: READ_C_1
                 policy: editor
                 collection: articles
                 action: BADACTION
@@ -924,11 +924,11 @@ class TestLoadConfigCustomPermissionsErrors:
                 permissions:
                   editor: "READ"
             custom_permissions:
-              - name: C_1
+              - name: READ_C_1
                 policy: editor
                 collection: articles
                 action: read
-              - name: C_2
+              - name: READ_C_2
                 policy: editor
                 collection: articles
                 action: badvalue
@@ -942,7 +942,7 @@ class TestLoadConfigCustomPermissionsErrors:
         entries = []
         for i in range(501):
             entries.append({
-                "name": f"C_{i + 1}",
+                "name": f"READ_C_{i + 1}",
                 "policy": "editor",
                 "collection": "articles",
                 "action": "read",
@@ -1039,7 +1039,7 @@ class TestParseCustomPermissionsDirect:
         """Req 3.2: valid entry is parsed into CustomPermissionEntry."""
         raw = [
             {
-                "name": "C_1",
+                "name": "READ_C_1",
                 "policy": "editor",
                 "collection": "articles",
                 "action": "read",
@@ -1048,7 +1048,7 @@ class TestParseCustomPermissionsDirect:
         result = _parse_custom_permissions(raw)
         assert len(result) == 1
         assert isinstance(result[0], CustomPermissionEntry)
-        assert result[0].name == "C_1"
+        assert result[0].name == "READ_C_1"
         assert result[0].policy == "editor"
         assert result[0].collection == "articles"
         assert result[0].action == "read"
@@ -1057,7 +1057,7 @@ class TestParseCustomPermissionsDirect:
         """Optional fields (validation, fields, permissions) are parsed."""
         raw = [
             {
-                "name": "C_1",
+                "name": "UPDATE_C_1",
                 "policy": "editor",
                 "collection": "articles",
                 "action": "update",
@@ -1075,7 +1075,7 @@ class TestParseCustomPermissionsDirect:
         """Optional fields default to None when absent."""
         raw = [
             {
-                "name": "C_1",
+                "name": "READ_C_1",
                 "policy": "editor",
                 "collection": "articles",
                 "action": "read",
@@ -1094,28 +1094,28 @@ class TestParseCustomPermissionsDirect:
 
     def test_missing_policy_raises_with_index(self):
         """Req 3.4: missing 'policy' → ConfigError with index 0."""
-        raw = [{"name": "C_1", "collection": "articles", "action": "read"}]
+        raw = [{"name": "READ_C_1", "collection": "articles", "action": "read"}]
         with pytest.raises(ConfigError, match="index 0.*missing required field: policy"):
             _parse_custom_permissions(raw)
 
     def test_missing_collection_raises_with_index(self):
         """Req 3.4: missing 'collection' → ConfigError with index 0."""
-        raw = [{"name": "C_1", "policy": "editor", "action": "read"}]
+        raw = [{"name": "READ_C_1", "policy": "editor", "action": "read"}]
         with pytest.raises(ConfigError, match="index 0.*missing required field: collection"):
             _parse_custom_permissions(raw)
 
     def test_missing_action_raises_with_index(self):
         """Req 3.4: missing 'action' → ConfigError with index 0."""
-        raw = [{"name": "C_1", "policy": "editor", "collection": "articles"}]
+        raw = [{"name": "READ_C_1", "policy": "editor", "collection": "articles"}]
         with pytest.raises(ConfigError, match="index 0.*missing required field: action"):
             _parse_custom_permissions(raw)
 
     def test_missing_field_at_index_2(self):
         """Req 3.4: error at index 2 reports correct index."""
         raw = [
-            {"name": "C_1", "policy": "ed", "collection": "art", "action": "read"},
-            {"name": "C_2", "policy": "ed", "collection": "art", "action": "create"},
-            {"name": "C_3", "policy": "ed", "action": "delete"},  # missing collection
+            {"name": "READ_C_1", "policy": "ed", "collection": "art", "action": "read"},
+            {"name": "CREATE_C_2", "policy": "ed", "collection": "art", "action": "create"},
+            {"name": "DELETE_C_3", "policy": "ed", "action": "delete"},  # missing collection
         ]
         with pytest.raises(ConfigError, match="index 2.*missing required field: collection"):
             _parse_custom_permissions(raw)
@@ -1123,7 +1123,7 @@ class TestParseCustomPermissionsDirect:
     def test_invalid_action_raises_with_index(self):
         """Req 3.6: invalid action → ConfigError with index and value."""
         raw = [
-            {"name": "C_1", "policy": "editor", "collection": "articles", "action": "execute"}
+            {"name": "READ_C_1", "policy": "editor", "collection": "articles", "action": "execute"}
         ]
         with pytest.raises(ConfigError, match="index 0.*invalid action.*execute"):
             _parse_custom_permissions(raw)
@@ -1131,8 +1131,8 @@ class TestParseCustomPermissionsDirect:
     def test_invalid_action_at_index_1(self):
         """Req 3.6: invalid action at index 1 reports correct index."""
         raw = [
-            {"name": "C_1", "policy": "ed", "collection": "art", "action": "read"},
-            {"name": "C_2", "policy": "ed", "collection": "art", "action": "badval"},
+            {"name": "READ_C_1", "policy": "ed", "collection": "art", "action": "read"},
+            {"name": "READ_C_2", "policy": "ed", "collection": "art", "action": "badval"},
         ]
         with pytest.raises(ConfigError, match="index 1.*invalid action.*badval"):
             _parse_custom_permissions(raw)
@@ -1140,7 +1140,7 @@ class TestParseCustomPermissionsDirect:
     def test_action_normalized_to_lowercase(self):
         """Req 3.6: action is case-insensitive, stored as lowercase."""
         raw = [
-            {"name": "C_1", "policy": "editor", "collection": "articles", "action": "READ"}
+            {"name": "READ_C_1", "policy": "editor", "collection": "articles", "action": "READ"}
         ]
         result = _parse_custom_permissions(raw)
         assert result[0].action == "read"
@@ -1148,7 +1148,7 @@ class TestParseCustomPermissionsDirect:
     def test_action_mixed_case_normalized(self):
         """Req 3.6: mixed case action is normalized."""
         raw = [
-            {"name": "C_1", "policy": "editor", "collection": "articles", "action": "Update"}
+            {"name": "UPDATE_C_1", "policy": "editor", "collection": "articles", "action": "Update"}
         ]
         result = _parse_custom_permissions(raw)
         assert result[0].action == "update"
@@ -1157,7 +1157,7 @@ class TestParseCustomPermissionsDirect:
         """All four valid actions are accepted."""
         for action in ("create", "read", "update", "delete"):
             raw = [
-                {"name": "C_1", "policy": "ed", "collection": "art", "action": action}
+                {"name": f"{action.upper()}_C_1", "policy": "ed", "collection": "art", "action": action}
             ]
             result = _parse_custom_permissions(raw)
             assert result[0].action == action
@@ -1179,23 +1179,23 @@ class TestParseCustomPermissionsDirect:
     def test_multiple_valid_entries(self):
         """Multiple valid entries are all parsed."""
         raw = [
-            {"name": "C_1", "policy": "ed", "collection": "art", "action": "read"},
-            {"name": "C_2", "policy": "ed", "collection": "art", "action": "create"},
-            {"name": "C_3", "policy": "ed", "collection": "com", "action": "delete"},
+            {"name": "READ_C_1", "policy": "ed", "collection": "art", "action": "read"},
+            {"name": "CREATE_C_2", "policy": "ed", "collection": "art", "action": "create"},
+            {"name": "DELETE_C_3", "policy": "ed", "collection": "com", "action": "delete"},
         ]
         result = _parse_custom_permissions(raw)
         assert len(result) == 3
-        assert result[0].name == "C_1"
-        assert result[1].name == "C_2"
-        assert result[2].name == "C_3"
+        assert result[0].name == "READ_C_1"
+        assert result[1].name == "CREATE_C_2"
+        assert result[2].name == "DELETE_C_3"
 
-    def test_name_matching_c_pattern_accepted(self):
-        """Req 3.2: name matching C_\\d+ pattern is accepted."""
+    def test_name_matching_action_c_pattern_accepted(self):
+        """Req 3.2: name matching ACTION_C_\\d+ pattern is accepted."""
         raw = [
-            {"name": "C_42", "policy": "ed", "collection": "art", "action": "read"}
+            {"name": "READ_C_42", "policy": "ed", "collection": "art", "action": "read"}
         ]
         result = _parse_custom_permissions(raw)
-        assert result[0].name == "C_42"
+        assert result[0].name == "READ_C_42"
 
     def test_name_not_matching_c_pattern_raises(self):
         """Req 3.2: name not matching C_\\d+ pattern raises ConfigError."""
@@ -1207,7 +1207,7 @@ class TestParseCustomPermissionsDirect:
 
     def test_name_pattern_various_invalid(self):
         """Various invalid name patterns raise ConfigError."""
-        invalid_names = ["C_", "C_abc", "D_1", "c_1", "C1", "1_C", ""]
+        invalid_names = ["C_", "C_1", "C_abc", "D_1", "c_1", "C1", "1_C", ""]
         for name in invalid_names:
             if name == "":
                 continue  # empty string caught by length validation first

@@ -129,7 +129,7 @@ def _custom_perms_with_existing_state(draw):
 
         custom_entries.append(
             CustomPermissionEntry(
-                name=f"C_{i + 1}",
+                name=f"{action.upper()}_C_{i + 1}",
                 policy=pname,
                 collection=col,
                 action=action,
