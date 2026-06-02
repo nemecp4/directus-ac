@@ -35,9 +35,11 @@ class DirectusClient:
         Base URL of the Directus instance, e.g. ``https://directus.example.com``.
     token:
         Static auth token (Directus admin or user token).
+    verify_ssl:
+        Whether to verify SSL certificates. Defaults to ``True``.
     """
 
-    def __init__(self, base_url: str, token: str) -> None:
+    def __init__(self, base_url: str, token: str, *, verify_ssl: bool = True) -> None:
         self._base_url = base_url.rstrip("/")
         self._client = httpx.Client(
             base_url=self._base_url,
@@ -45,6 +47,7 @@ class DirectusClient:
                 "Authorization": f"Bearer {token}",
                 "Content-Type": "application/json",
             },
+            verify=verify_ssl,
         )
 
     # ------------------------------------------------------------------

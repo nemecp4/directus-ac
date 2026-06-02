@@ -1,0 +1,33 @@
+collections:
+- table1
+roles:
+- role1_ro
+- role2_rw
+groups:
+- collections:
+  - table1
+  permissions:
+    role1_ro: READ C_1
+    role2_rw: READ WRITE C_2
+custom_permissions:
+- name: C_1
+  policy: group1
+  collection: table1
+  action: update
+  fields:
+  - '*'
+  permissions:
+    _and:
+    - _and: []
+    - id:
+        _eq: '4'
+- name: C_2
+  policy: group2_rw
+  collection: table1
+  action: update
+  validation:
+    _and:
+    - id:
+        _eq: '10'
+  fields:
+  - id

@@ -61,6 +61,20 @@ def build_parser() -> argparse.ArgumentParser:
         help="Create missing roles instead of failing",
     )
 
+    parser.add_argument(
+        "--ignore-ssl",
+        action="store_true",
+        default=False,
+        help="Disable SSL certificate verification for HTTPS connections",
+    )
+
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        default=False,
+        help="Enable debug-level logging output",
+    )
+
     # Mutually exclusive mode group
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument(
@@ -114,12 +128,22 @@ def main() -> None:
         parser.print_help()
         sys.exit(0)
 
-    # Configure logging: INFO to stdout, ERROR to stderr
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(message)s",
-        handlers=[logging.StreamHandler(sys.stdout)],
-    )
+    # Configure logging based on verbosity
+    if args.verbose:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(levelname)s:%(name)s: %(message)s",
+            handlers=[logging.StreamHandler(sys.stdout)],
+        )
+    else:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(message)s",
+            handlers=[logging.StreamHandler(sys.stdout)],
+        )
+
+    if args.ignore_ssl:
+        logger.warning("SSL certificate verification is disabled.")
 
     try:
         # Resolve Directus URL
@@ -140,7 +164,7 @@ def main() -> None:
 
         # --check path: read-only inspection, skip config loading
         if args.check:
-            client = DirectusClient(base_url=url, token=token)
+            client = DirectusClient(base_url=url, token=token, verify_ssl=not args.ignore_ssl)
             check_cmd = CheckCommand(
                 client=client,
                 enable_private_collections=args.enable_private_collections,
@@ -153,7 +177,7 @@ def main() -> None:
             config = load_config(args.config)
 
             # Instantiate components
-            client = DirectusClient(base_url=url, token=token)
+            client = DirectusClient(base_url=url, token=token, verify_ssl=not args.ignore_ssl)
             validator = Validator(client=client)
             permission_manager = PermissionManager(client=client)
 
@@ -195,7 +219,7 @@ def main() -> None:
             )
 
         elif args.generate:
-            client = DirectusClient(base_url=url, token=token)
+            client = DirectusClient(base_url=url, token=token, verify_ssl=not args.ignore_ssl)
             generator = Generator(client, include_system=args.include_system)
             config = generator.generate()
             yaml_str = serialize_config(config)
