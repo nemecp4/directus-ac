@@ -632,8 +632,8 @@ class TestCheckIntegration:
                 main()
 
         assert exc_info.value.code == 0
-        # C_1 (id=3) has fields=["title", "body"]
-        assert "fields:(title,body)" in caplog.text
+        # Custom permissions now show only name, no field indicators
+        assert "fields:" not in caplog.text
 
     @patch("directus_ac.cli.DirectusClient")
     def test_check_shows_validation_indicator(
@@ -654,8 +654,8 @@ class TestCheckIntegration:
                 main()
 
         assert exc_info.value.code == 0
-        # C_1 (id=3) has validation
-        assert "has validation" in caplog.text
+        # Custom permissions now show only name, no validation indicators
+        assert "has validation" not in caplog.text
 
     @patch("directus_ac.cli.DirectusClient")
     def test_check_shows_item_permissions_indicator(
@@ -676,8 +676,8 @@ class TestCheckIntegration:
                 main()
 
         assert exc_info.value.code == 0
-        # C_2 (id=4) has item-level permissions
-        assert "has item permissions" in caplog.text
+        # Custom permissions now show only name, no item permission indicators
+        assert "has item permissions" not in caplog.text
 
     @patch("directus_ac.cli.DirectusClient")
     def test_check_without_custom_permissions_shows_only_actions(
@@ -769,4 +769,5 @@ class TestCheckIntegration:
         # id=2 has non-default fields → custom → C_1
         assert "posts:" in caplog.text
         assert "C_1" in caplog.text
-        assert "fields:(title)" in caplog.text
+        # No indicators should be present
+        assert "fields:" not in caplog.text

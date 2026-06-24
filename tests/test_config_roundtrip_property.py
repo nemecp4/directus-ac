@@ -1,11 +1,12 @@
-"""Property-based test for config parsing round-trip (Feature: custom-permissions).
+"""Property-based test for config serialization round-trip (Feature: custom-permissions).
 
-Property 6: Config parsing round-trip
-For any valid DirectusACConfig containing custom permissions, serializing it to
-YAML and parsing it back with load_config SHALL produce an equivalent
-custom_permissions list (same entries with same field values).
+Property 4: Config serialization round-trip preserves custom permission data
+For any valid DirectusACConfig containing custom permissions with ACTION_C_N names,
+serializing with serialize_config and then loading with load_config SHALL produce an
+equivalent config where all custom permission names, Permission_Set references, and
+associated data are preserved.
 
-**Validates: Requirements 3.1, 3.2**
+**Validates: Requirements 3.1, 3.2, 3.3**
 """
 from __future__ import annotations
 
@@ -96,7 +97,7 @@ def _custom_permission_entry(draw, counter: int):
     fields = draw(_opt_fields)
     permissions = draw(_opt_permissions)
 
-    # Build a deterministic name using C_N pattern
+    # Build a deterministic name using ACTION_C_N pattern
     entry_name = f"{action.upper()}_C_{counter}"
 
     return CustomPermissionEntry(
@@ -111,12 +112,13 @@ def _custom_permission_entry(draw, counter: int):
 
 
 @st.composite
-def _valid_config_with_custom_permissions(draw):
-    """Generate a valid DirectusACConfig with custom_permissions.
+def _valid_config_with_custom_permissions_and_refs(draw):
+    """Generate a valid DirectusACConfig with custom_permissions AND group refs.
 
     Ensures:
     - At least 1 collection, 1 role, 1 group
     - 1-5 custom permission entries
+    - Groups reference custom permissions via custom_permission_refs
     - All values are YAML-safe (round-trip cleanly)
     """
     # Generate collections (1-3)
@@ -141,7 +143,14 @@ def _valid_config_with_custom_permissions(draw):
         )
     )
 
-    # Generate at least one group
+    # Generate 1-5 custom permission entries
+    num_custom = draw(st.integers(min_value=1, max_value=5))
+    custom_permissions = []
+    for i in range(num_custom):
+        entry = draw(_custom_permission_entry(counter=i + 1))
+        custom_permissions.append(entry)
+
+    # Build group with standard keywords AND custom permission refs
     keywords = draw(
         st.lists(
             st.sampled_from(list(PermissionKeyword)),
@@ -150,17 +159,30 @@ def _valid_config_with_custom_permissions(draw):
             unique=True,
         )
     )
+
+    # Assign some custom permissions as refs to roles in the group
+    # Each role gets a subset of custom permission names
+    custom_permission_refs: dict[str, list[str]] = {}
+    all_custom_names = [cp.name for cp in custom_permissions]
+
+    for role in roles:
+        # Each role gets at least one custom ref (draw a non-empty subset)
+        num_refs = draw(st.integers(min_value=1, max_value=len(all_custom_names)))
+        refs = draw(
+            st.lists(
+                st.sampled_from(all_custom_names),
+                min_size=num_refs,
+                max_size=num_refs,
+                unique=True,
+            )
+        )
+        custom_permission_refs[role] = refs
+
     group = GroupDefinition(
         collections=collections[:1],
         permissions={roles[0]: keywords},
+        custom_permission_refs=custom_permission_refs,
     )
-
-    # Generate 1-5 custom permission entries
-    num_custom = draw(st.integers(min_value=1, max_value=5))
-    custom_permissions = []
-    for i in range(num_custom):
-        entry = draw(_custom_permission_entry(counter=i + 1))
-        custom_permissions.append(entry)
 
     return DirectusACConfig(
         collections=collections,
@@ -171,21 +193,22 @@ def _valid_config_with_custom_permissions(draw):
 
 
 # ---------------------------------------------------------------------------
-# Feature: custom-permissions, Property 6: Config parsing round-trip
-# Validates: Requirements 3.1, 3.2
+# Feature: custom-permissions, Property 4: Config serialization round-trip
+# Validates: Requirements 3.1, 3.2, 3.3
 # ---------------------------------------------------------------------------
 
 
-@given(config=_valid_config_with_custom_permissions())
+@given(config=_valid_config_with_custom_permissions_and_refs())
 @settings(max_examples=100)
-def test_config_parsing_round_trip(config: DirectusACConfig) -> None:
-    """Property 6: Config parsing round-trip.
+def test_config_roundtrip_preserves_custom_permission_data(config: DirectusACConfig) -> None:
+    """Property 4: Config serialization round-trip preserves custom permission data.
 
-    For any valid DirectusACConfig containing custom permissions, serializing
-    it to YAML and parsing it back with load_config SHALL produce an equivalent
-    custom_permissions list (same entries with same field values).
+    For any valid DirectusACConfig containing custom permissions with ACTION_C_N names,
+    serializing with serialize_config and then loading with load_config SHALL produce
+    an equivalent config where all custom permission names, Permission_Set references,
+    and associated data are preserved.
 
-    **Validates: Requirements 3.1, 3.2**
+    **Validates: Requirements 3.1, 3.2, 3.3**
     """
     # Step 1: Serialize the config to YAML
     yaml_output = serialize_config(config)
@@ -201,7 +224,7 @@ def test_config_parsing_round_trip(config: DirectusACConfig) -> None:
         # Step 3: Parse back with load_config
         parsed_config = load_config(tmp_path)
 
-        # Step 4: Verify equivalence of custom_permissions
+        # --- Verify custom permission names are preserved (Req 3.1) ---
         assert len(parsed_config.custom_permissions) == len(config.custom_permissions), (
             f"Expected {len(config.custom_permissions)} custom permissions after "
             f"round-trip, got {len(parsed_config.custom_permissions)}"
@@ -217,18 +240,15 @@ def test_config_parsing_round_trip(config: DirectusACConfig) -> None:
                 f"Entry {i}: policy mismatch: '{parsed.policy}' != '{original.policy}'"
             )
             assert parsed.collection == original.collection, (
-                f"Entry {i}: collection mismatch: '{parsed.collection}' != '{original.collection}'"
+                f"Entry {i}: collection mismatch: "
+                f"'{parsed.collection}' != '{original.collection}'"
             )
             assert parsed.action == original.action, (
                 f"Entry {i}: action mismatch: '{parsed.action}' != '{original.action}'"
             )
 
             # For optional attributes, serialize_config skips empty dicts/lists,
-            # so after round-trip they become None. We normalize for comparison:
-            # - None stays None
-            # - {} becomes None (skipped during serialization)
-            # - [] becomes None (skipped during serialization)
-            # - Non-empty values stay as-is
+            # so after round-trip they become None. Normalize for comparison.
             def normalize(val):
                 if val is None:
                     return None
@@ -248,6 +268,51 @@ def test_config_parsing_round_trip(config: DirectusACConfig) -> None:
                 f"Entry {i}: permissions mismatch: "
                 f"{parsed.permissions} != {original.permissions}"
             )
+
+        # --- Verify Permission_Set references in groups are preserved (Req 3.2) ---
+        assert len(parsed_config.groups) == len(config.groups), (
+            f"Expected {len(config.groups)} groups after round-trip, "
+            f"got {len(parsed_config.groups)}"
+        )
+
+        for g_idx, (orig_group, parsed_group) in enumerate(
+            zip(config.groups, parsed_config.groups)
+        ):
+            # Verify custom_permission_refs are preserved for each role
+            orig_refs = orig_group.custom_permission_refs
+            parsed_refs = parsed_group.custom_permission_refs
+
+            # All roles with custom refs in original should exist in parsed
+            for role_name, orig_role_refs in orig_refs.items():
+                assert role_name in parsed_refs, (
+                    f"Group {g_idx}: role '{role_name}' missing from "
+                    f"parsed custom_permission_refs. "
+                    f"Original refs: {orig_refs}, Parsed refs: {parsed_refs}"
+                )
+                # Compare as sets since order within a Permission_Set string
+                # is: keywords first, then custom refs in list order.
+                # serialize_config preserves the list order of custom_refs.
+                assert parsed_refs[role_name] == orig_role_refs, (
+                    f"Group {g_idx}, role '{role_name}': "
+                    f"custom_permission_refs mismatch: "
+                    f"{parsed_refs[role_name]} != {orig_role_refs}"
+                )
+
+        # --- Verify standard keywords are also preserved (Req 3.3 context) ---
+        for g_idx, (orig_group, parsed_group) in enumerate(
+            zip(config.groups, parsed_config.groups)
+        ):
+            for role_name, orig_keywords in orig_group.permissions.items():
+                assert role_name in parsed_group.permissions, (
+                    f"Group {g_idx}: role '{role_name}' missing from "
+                    f"parsed permissions"
+                )
+                # Keywords should be preserved (possibly reordered to canonical)
+                assert set(parsed_group.permissions[role_name]) == set(orig_keywords), (
+                    f"Group {g_idx}, role '{role_name}': "
+                    f"keywords mismatch: "
+                    f"{parsed_group.permissions[role_name]} != {orig_keywords}"
+                )
     finally:
         # Clean up temp file
         os.unlink(tmp_path)

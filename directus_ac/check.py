@@ -77,23 +77,11 @@ class CheckCommand:
         return "\n".join(lines)
 
     def _format_custom_ref(self, name: str, perm: DirectusPermission) -> str:
-        """Format a single custom permission reference with indicators.
+        """Format a single custom permission reference.
 
-        Returns a string like ``C_1 fields:(title,body) has validation``.
+        Returns only the permission name (e.g., 'UPDATE_C_3').
         """
-        parts = [name]
-
-        if perm.fields is not None:
-            fields_str = ",".join(perm.fields)
-            parts.append(f"fields:({fields_str})")
-
-        if perm.validation is not None:
-            parts.append("has validation")
-
-        if perm.permissions is not None:
-            parts.append("has item permissions")
-
-        return " ".join(parts)
+        return name
 
     def _format_policies(
         self,

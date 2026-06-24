@@ -31,8 +31,8 @@ class GroupDefinition(BaseModel):
     ``collections``.
 
     The ``custom_permission_refs`` field maps role names to lists of custom
-    permission reference names (e.g., ``C_1``, ``C_2``) that are associated
-    with that role for the collections in this group.
+    permission reference names (e.g., ``UPDATE_C_1``, ``READ_C_2``) that are
+    associated with that role for the collections in this group.
     """
 
     collections: list[str]
@@ -72,7 +72,7 @@ class CustomPermissionEntry(BaseModel):
     in the standard groups section.
     """
 
-    name: str  # Generated Permission_Name (C_1, C_2, etc.)
+    name: str  # Generated Permission_Name (e.g., UPDATE_C_1, READ_C_2)
     policy: str  # Policy name (human-readable)
     collection: str
     action: str  # "create", "read", "update", "delete"

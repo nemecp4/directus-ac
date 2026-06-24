@@ -337,14 +337,13 @@ def test_comma_separated_list_format(data) -> None:
 
 @given(data=_check_command_state_with_custom_perms())
 @settings(max_examples=100)
-def test_fields_indicator_appended(data) -> None:
-    """Property 7 (part C): Fields indicator appended to custom refs.
+def test_fields_indicator_not_appended(data) -> None:
+    """Property 7 (part C): No fields indicator appended to custom refs.
 
-    When a Custom_Permission has non-null fields, the CheckCommand SHALL append
-    to the Custom_Permission reference a comma-separated list of the restricted
-    field names enclosed in parentheses, prefixed with "fields:".
+    When a Custom_Permission has non-null fields, the CheckCommand SHALL NOT
+    append any field indicators - only the permission name is displayed.
 
-    **Validates: Requirements 5.3**
+    **Validates: Requirements 4.1, 4.2**
     """
     (
         permissions,
@@ -358,78 +357,21 @@ def test_fields_indicator_appended(data) -> None:
     cmd = _make_check_command()
     result = cmd._format_policies(permissions, policies, roles)
 
-    # Find the line for the custom collection
-    lines = result.split("\n")
-    collection_lines = [
-        line for line in lines if line.strip().startswith(f"{custom_collection}:")
-    ]
-    assert len(collection_lines) >= 1
-
-    coll_line = collection_lines[0].strip()
-    parts_str = coll_line.split(": ", 1)[1]
-
-    # For each custom permission with fields, verify the indicator
-    for detail in custom_perm_details:
-        if detail["fields"] is not None:
-            expected_fields_str = ",".join(detail["fields"])
-            expected_indicator = f"fields:({expected_fields_str})"
-            assert expected_indicator in parts_str, (
-                f"Expected fields indicator '{expected_indicator}' in line: {parts_str}"
-            )
-
-
-@given(data=_check_command_state_with_custom_perms())
-@settings(max_examples=100)
-def test_validation_indicator_appended(data) -> None:
-    """Property 7 (part D): Validation indicator appended to custom refs.
-
-    When a Custom_Permission has non-null validation, the CheckCommand SHALL
-    append "has validation" to the Custom_Permission reference.
-
-    **Validates: Requirements 5.4**
-    """
-    (
-        permissions,
-        policies,
-        roles,
-        custom_collection,
-        standard_actions,
-        custom_perm_details,
-    ) = data
-
-    cmd = _make_check_command()
-    result = cmd._format_policies(permissions, policies, roles)
-
-    # Find the line for the custom collection
-    lines = result.split("\n")
-    collection_lines = [
-        line for line in lines if line.strip().startswith(f"{custom_collection}:")
-    ]
-    assert len(collection_lines) >= 1
-
-    coll_line = collection_lines[0].strip()
-    parts_str = coll_line.split(": ", 1)[1]
-
-    # Count how many custom perms have validation
-    custom_with_validation = [d for d in custom_perm_details if d["validation"] is not None]
-
-    # "has validation" should appear once per custom perm with validation
-    count = parts_str.count("has validation")
-    assert count == len(custom_with_validation), (
-        f"Expected 'has validation' to appear {len(custom_with_validation)} times, "
-        f"found {count} in: {parts_str}"
+    # No fields indicator should appear anywhere in the output
+    assert "fields:(" not in result, (
+        f"Expected no 'fields:(...)' indicators in output, but found one in:\n{result}"
     )
 
 
 @given(data=_check_command_state_with_custom_perms())
 @settings(max_examples=100)
-def test_item_permissions_indicator_appended(data) -> None:
-    """Property 7 (part E): Item permissions indicator appended to custom refs.
+def test_validation_indicator_not_appended(data) -> None:
+    """Property 7 (part D): No validation indicator appended to custom refs.
 
-    When a Custom_Permission has non-null permissions (item-level), the CheckCommand
-    SHALL append "has item permissions" to the Custom_Permission reference.
+    When a Custom_Permission has non-null validation, the CheckCommand SHALL NOT
+    append any validation indicators - only the permission name is displayed.
 
-    **Validates: Requirements 5.4**
+    **Validates: Requirements 4.1, 4.3**
     """
     (
         permissions,
@@ -443,24 +385,37 @@ def test_item_permissions_indicator_appended(data) -> None:
     cmd = _make_check_command()
     result = cmd._format_policies(permissions, policies, roles)
 
-    # Find the line for the custom collection
-    lines = result.split("\n")
-    collection_lines = [
-        line for line in lines if line.strip().startswith(f"{custom_collection}:")
-    ]
-    assert len(collection_lines) >= 1
+    # No validation indicator should appear anywhere in the output
+    assert "has validation" not in result, (
+        f"Expected no 'has validation' indicators in output, but found one in:\n{result}"
+    )
 
-    coll_line = collection_lines[0].strip()
-    parts_str = coll_line.split(": ", 1)[1]
 
-    # Count how many custom perms have item permissions
-    custom_with_item_perms = [d for d in custom_perm_details if d["permissions"] is not None]
+@given(data=_check_command_state_with_custom_perms())
+@settings(max_examples=100)
+def test_item_permissions_indicator_not_appended(data) -> None:
+    """Property 7 (part E): No item permissions indicator appended to custom refs.
 
-    # "has item permissions" should appear once per custom perm with item permissions
-    count = parts_str.count("has item permissions")
-    assert count == len(custom_with_item_perms), (
-        f"Expected 'has item permissions' to appear {len(custom_with_item_perms)} times, "
-        f"found {count} in: {parts_str}"
+    When a Custom_Permission has non-null permissions (item-level), the CheckCommand
+    SHALL NOT append any item permission indicators - only the permission name is displayed.
+
+    **Validates: Requirements 4.1, 4.4**
+    """
+    (
+        permissions,
+        policies,
+        roles,
+        custom_collection,
+        standard_actions,
+        custom_perm_details,
+    ) = data
+
+    cmd = _make_check_command()
+    result = cmd._format_policies(permissions, policies, roles)
+
+    # No item permissions indicator should appear anywhere in the output
+    assert "has item permissions" not in result, (
+        f"Expected no 'has item permissions' indicators in output, but found one in:\n{result}"
     )
 
 

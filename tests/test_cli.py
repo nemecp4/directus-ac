@@ -90,7 +90,7 @@ class TestCredentialResolutionCheckMode:
 
         assert exc_info.value.code == 0
         mock_client_cls.assert_called_once_with(
-            base_url="http://arg-url.example.com", token="env-token"
+            base_url="http://arg-url.example.com", token="env-token", verify_ssl=True
         )
 
     @patch("directus_ac.cli.CheckCommand")
@@ -113,7 +113,7 @@ class TestCredentialResolutionCheckMode:
 
         assert exc_info.value.code == 0
         mock_client_cls.assert_called_once_with(
-            base_url="http://env-url.example.com", token="arg-token"
+            base_url="http://env-url.example.com", token="arg-token", verify_ssl=True
         )
 
     def test_missing_url_no_arg_no_env_exits_1(self, monkeypatch, caplog):
@@ -299,7 +299,7 @@ class TestCreateRolesWithCheck:
             main()
 
         assert exc_info.value.code == 0
-        mock_client_cls.assert_called_once_with(base_url="http://localhost", token="t")
+        mock_client_cls.assert_called_once_with(base_url="http://localhost", token="t", verify_ssl=True)
         mock_check_cls.assert_called_once_with(client=mock_client_cls.return_value, enable_private_collections=False)
         mock_check_instance.run.assert_called_once()
 
@@ -468,7 +468,7 @@ class TestUpdateFlag:
         main()
 
         mock_load_config.assert_called_once_with("./directus_ac.yaml")
-        mock_client_cls.assert_called_once_with(base_url="http://localhost:8055", token="t")
+        mock_client_cls.assert_called_once_with(base_url="http://localhost:8055", token="t", verify_ssl=True)
         mock_validator.validate_collections.assert_called_once_with(["col1"])
         mock_validator.validate_roles.assert_called_once_with(
             ["role1"], False, mock_pm
@@ -923,8 +923,10 @@ class TestCheckWithCustomPermissions:
         # Custom permissions are now inline (no separate "Custom Permissions" section)
         assert "Custom Permissions" not in caplog.text
         assert "articles" in caplog.text
-        assert "fields:(title,body)" in caplog.text
-        assert "has validation" in caplog.text
+        # No indicators should be present - only the name is shown
+        assert "UPDATE_C_1" in caplog.text
+        assert "fields:" not in caplog.text
+        assert "has validation" not in caplog.text
 
     @patch("directus_ac.cli.DirectusClient")
     def test_check_output_omits_custom_permissions_when_none_exist(
@@ -1022,7 +1024,9 @@ class TestCheckWithCustomPermissions:
         assert exc_info.value.code == 0
         # Custom permissions are now inline (no separate "Custom Permissions" section)
         assert "Custom Permissions" not in caplog.text
-        assert "has item permissions" in caplog.text
+        # Only name is shown, no indicators
+        assert "READ_C_1" in caplog.text
+        assert "has item permissions" not in caplog.text
 
 
 class TestGenerateErrorHandling:

@@ -29,7 +29,7 @@ _REQUIRED_KEYS = ("collections", "roles", "groups")
 _VALID_KEYWORDS: frozenset[str] = frozenset(kw.value for kw in PermissionKeyword)
 
 # Pattern for custom permission references (e.g., CREATE_C_1, READ_C_2).
-_CUSTOM_REF_PATTERN: re.Pattern[str] = re.compile(r"^[A-Z]+_C_\d+$")
+_CUSTOM_REF_PATTERN: re.Pattern[str] = re.compile(r"^(CREATE|READ|UPDATE|DELETE)_C_\d+$")
 
 # Valid action values for custom permissions (case-insensitive).
 _VALID_ACTIONS: frozenset[str] = frozenset(("create", "read", "update", "delete"))

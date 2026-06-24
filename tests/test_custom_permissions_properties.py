@@ -1183,12 +1183,10 @@ def test_check_command_custom_permission_formatting(data) -> None:
     """Property 10: Check command custom permission formatting.
 
     For any custom permission displayed by CheckCommand, the output SHALL
-    contain the Permission_Name (C_N) inline alongside standard actions,
-    plus a "fields:(...)" indicator when fields is non-null, and
-    "has validation"/"has item permissions" indicators when those attributes
-    are non-null.
+    contain the Permission_Name (ACTION_C_N) inline alongside standard actions,
+    with only the name displayed (no field, validation, or item permission indicators).
 
-    **Validates: Requirements 5.2, 5.3, 5.4**
+    **Validates: Requirements 4.1, 4.2, 4.3, 4.4**
     """
     from directus_ac.check import CheckCommand
 
@@ -1216,41 +1214,25 @@ def test_check_command_custom_permission_formatting(data) -> None:
     # Sort permissions by id (same as the implementation does for counter assignment)
     sorted_perms = sorted(permissions, key=lambda p: p.id)
 
-    # Verify each custom permission's C_N reference and indicators appear in the output
+    # Verify each custom permission's ACTION_C_N reference appears in the output
     for counter, perm in enumerate(sorted_perms, start=1):
         expected_name = generate_permission_name(perm.action, counter)
 
-        # The C_N reference must appear in the output
+        # The ACTION_C_N reference must appear in the output
         assert expected_name in result, (
             f"Expected permission name '{expected_name}' in output but not found"
         )
 
-        # Find the collection line(s) containing this C_N reference
-        ref_lines = [line for line in lines if expected_name in line]
-        assert len(ref_lines) >= 1, (
-            f"Expected at least one line containing '{expected_name}'"
-        )
-
-        # Check the line containing this reference for correct indicators
-        for ref_line in ref_lines:
-            # Check fields indicator
-            if perm.fields is not None:
-                expected_fields = f"fields:({','.join(perm.fields)})"
-                assert expected_fields in ref_line, (
-                    f"Expected '{expected_fields}' in line: {ref_line!r}"
-                )
-
-            # Check validation indicator
-            if perm.validation is not None:
-                assert "has validation" in ref_line, (
-                    f"Expected 'has validation' in line: {ref_line!r}"
-                )
-
-            # Check item permissions indicator
-            if perm.permissions is not None:
-                assert "has item permissions" in ref_line, (
-                    f"Expected 'has item permissions' in line: {ref_line!r}"
-                )
+    # Verify no indicators are present anywhere in the output
+    assert "fields:(" not in result, (
+        f"Expected no 'fields:(...)' indicators in output, but found one"
+    )
+    assert "has validation" not in result, (
+        f"Expected no 'has validation' indicators in output, but found one"
+    )
+    assert "has item permissions" not in result, (
+        f"Expected no 'has item permissions' indicators in output, but found one"
+    )
 
 
 # ---------------------------------------------------------------------------
